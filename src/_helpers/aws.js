@@ -68,7 +68,7 @@ const streamTo = (bucket, key) => {
   return pass;
 };
 
-const getAllCVAsZip = async outputDir => {
+const getAllCVAsZip = async (outputDir, callback) => {
   return new Promise(async (resolve, reject) => {
     // Get all the fileNames in the cv bucket
     const keys = await listFilesInABucket({
@@ -104,8 +104,8 @@ const getAllCVAsZip = async outputDir => {
 
       // Your promise gets resolved when the fluid stops running...
       // so that's when you get to close and resolve
-      myStream.on('close', resolve);
-      myStream.on('end', resolve);
+      myStream.on('close', _resolve);
+      myStream.on('end', _resolve);
       myStream.on('error', reject);
 
       archive.pipe(myStream); // archiver will pass the zip to myStream
@@ -115,6 +115,8 @@ const getAllCVAsZip = async outputDir => {
       throw new Error(err);
     });
 
+    // call the cb which was passed in the argument
+    callback();
     return resolve();
   });
 };

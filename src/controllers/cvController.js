@@ -27,6 +27,9 @@ const multerOptions = {
 
 const uploadMiddleware = multer(multerOptions).single('file');
 
+// GLOBAL Variable
+let isUpdatedZipSavedInS3 = true;
+
 /**
  * @route - POST /api/cv
  * @desc - route for uploading/updating a CV
@@ -70,6 +73,13 @@ async function uploadCV(req, res, next) {
     /* eslint-disable-next-line */
     const updatedUser = await User.findByIdAndUpdate(user._id, {
       $set: { hasUploadedCV: true },
+    });
+
+    isUpdatedZipSavedInS3 = false;
+
+    const outputDir = 'zip/2020.zip'; // TODO: Change it
+    getAllCVAsZip(outputDir, () => {
+      isUpdatedZipSavedInS3 = true;
     });
 
     return res.json(s3data);
@@ -145,8 +155,13 @@ async function getAllCVsAsZip(req, res, next) {
         .json({ message: 'You are not allowed to perform this action' });
     }
 
-    const outputDir = 'zip/2020.zip'; // For 2020 Batch
-    await getAllCVAsZip(outputDir);
+    const outputDir = 'zip/2020.zip'; // TODO: Change it
+
+    if (!isUpdatedZipSavedInS3) {
+      await getAllCVAsZip(outputDir, () => {
+        isUpdatedZipSavedInS3 = true;
+      });
+    }
 
     const url = getSignedURL({
       Bucket: process.env.AWS_BUCKET_NAME,
