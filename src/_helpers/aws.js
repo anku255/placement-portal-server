@@ -18,4 +18,20 @@ const uploadToS3 = params => {
   });
 };
 
-export { aws, s3, uploadToS3 };
+const isFileInS3 = params => {
+  return new Promise(resolve => {
+    s3.headObject(params, err => {
+      if (err && err.code === 'NotFound') {
+        /* eslint-disable-next-line */
+        return resolve(false);
+      }
+      return resolve(true);
+    });
+  });
+};
+
+const getSignedURL = params => {
+  return s3.getSignedUrl('getObject', params);
+};
+
+export { aws, s3, uploadToS3, isFileInS3, getSignedURL};
