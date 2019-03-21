@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import multer from 'multer';
 import { uploadToS3, isFileInS3, getSignedURL } from '../_helpers/aws';
+import { userTypes } from '../constants';
 
 const router = express.Router();
 const User = mongoose.model('users');
@@ -29,10 +30,16 @@ const uploadMiddleware = multer(multerOptions).single('file');
 router.post('/', uploadMiddleware, uploadCV);
 /**
  * @route - POST /api/cv
- * @desc - route for uploading/updating a CV
+ * @desc - route for getting a direct url for CV
  * @access - private
  */
 router.get('/', getCV);
+/**
+ * @route - POST /api/cv/regNo/:regNo
+ * @desc - route for getting direct Url for CV by regNo
+ * @access - private
+ */
+router.get('/regNo/:regNo', getCVByRegNo);
 
 // Controllers
 async function uploadCV(req, res, next) {
@@ -69,16 +76,49 @@ async function getCV(req, res, next) {
     const awsS3Params = {
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: `cv/${user.regNo}.pdf`,
-      Expires: 60, // link expires in 60 seconds
     };
 
     const hasUserUploadedCV = await isFileInS3(awsS3Params);
 
     if (hasUserUploadedCV) {
-      const url = getSignedURL(awsS3Params);
+      const url = getSignedURL({
+        ...awsS3Params,
+        Expires: 60 /* link expires in 60 seconds */,
+      });
       return res.json(url);
     }
     return res.status(400).json({ message: 'You have not uploaded your CV' });
+  } catch (err) {
+    return res.status(500).json({ type: 'miscellaneous', message: err });
+  }
+}
+
+async function getCVByRegNo(req, res, next) {
+  try {
+    const { user } = req;
+    const { regNo } = req.params;
+
+    if (user.type !== userTypes.ADMIN) {
+      return res
+        .status(400)
+        .json({ message: 'You are not allowed to perform this action' });
+    }
+
+    const awsS3Params = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: `cv/${Number(regNo)}.pdf`, // Casting to Number removes the preceding zeroes
+    };
+
+    const hasUserUploadedCV = await isFileInS3(awsS3Params);
+
+    if (hasUserUploadedCV) {
+      const url = getSignedURL({
+        ...awsS3Params,
+        Expires: 60 /* link expires in 60 seconds */,
+      });
+      return res.json(url);
+    }
+    return res.status(400).json({ message: 'User has not uploaded his CV.' });
   } catch (err) {
     return res.status(500).json({ type: 'miscellaneous', message: err });
   }

@@ -34,4 +34,4 @@ const getSignedURL = params => {
   return s3.getSignedUrl('getObject', params);
 };
 
-export { aws, s3, uploadToS3, isFileInS3, getSignedURL};
+export { aws, s3, uploadToS3, isFileInS3, getSignedURL };
