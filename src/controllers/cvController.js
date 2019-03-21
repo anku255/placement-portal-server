@@ -1,8 +1,10 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import multer from 'multer';
 import { uploadToS3, isFileInS3, getSignedURL } from '../_helpers/aws';
 
 const router = express.Router();
+const User = mongoose.model('users');
 
 // Multer setup
 const multerOptions = {
@@ -46,6 +48,12 @@ async function uploadCV(req, res, next) {
     };
 
     const s3data = await uploadToS3(awsS3Params);
+
+    /* eslint-disable-next-line */
+    const updatedUser = await User.findByIdAndUpdate(user._id, {
+      $set: { hasUploadedCV: true },
+    });
+
     return res.json(s3data);
 
     // TODO:

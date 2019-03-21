@@ -31,6 +31,10 @@ const userSchema = new Schema({
     required: true,
     unique: true,
   },
+  hasUploadedCV: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 /* eslint-disable-next-line */
