@@ -11,6 +11,7 @@ mongoose.connection.on('error', err => {
 });
 
 // require models here
+require('./models/User');
 
 // start the app
 const app = require('./app');

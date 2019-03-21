@@ -3,5 +3,13 @@
   "prettier.disableLanguages": ["js"],
   "editor.formatOnSave": false,
   "eslint.autoFixOnSave": true,
-  "eslint.alwaysShowStatus": true
+  "eslint.alwaysShowStatus": true,
+  "workbench.colorCustomizations": {
+    "editor.selectionBackground": "#72778b",
+    "editor.selectionHighlightBackground": "#40445a",
+    "titleBar.activeBackground": "#0dcc34",
+    "titleBar.inactiveBackground": "#0dcc3499",
+    "titleBar.activeForeground": "#15202b",
+    "titleBar.inactiveForeground": "#15202b99"
+  }
 }
