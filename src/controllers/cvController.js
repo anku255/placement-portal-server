@@ -28,7 +28,7 @@ const multerOptions = {
 const uploadMiddleware = multer(multerOptions).single('file');
 
 // GLOBAL Variable
-let isUpdatedZipSavedInS3 = true;
+let isUpdatedZipSavedInS3 = false;
 
 /**
  * @route - POST /api/cv
@@ -47,13 +47,13 @@ router.get('/', getCV);
  * @desc - route for getting direct Url for CV by regNo
  * @access - private
  */
-router.get('/regNo/:regNo', getCVByRegNo);
+router.get('/batchYear/:batchYear/regNo/:regNo', getCVYearAndRegNo);
 /**
  * @route - POST /api/cv/all
  * @desc - route for getting all cvs as ZIP
  * @access - private
  */
-router.get('/all', getAllCVsAsZip);
+router.get('/all/batchYear/:batchYear', getAllCVsAsZip);
 
 // Controllers
 async function uploadCV(req, res, next) {
@@ -64,7 +64,7 @@ async function uploadCV(req, res, next) {
 
     const awsS3Params = {
       Bucket: process.env.AWS_BUCKET_NAME,
-      Key: `cv/${user.regNo}.${extension}`,
+      Key: `cv/${user.batchYear}/${user.regNo}.${extension}`,
       Body: file.buffer,
     };
 
@@ -75,16 +75,16 @@ async function uploadCV(req, res, next) {
       $set: { hasUploadedCV: true },
     });
 
+    // Generate ZIP
     isUpdatedZipSavedInS3 = false;
 
-    const outputDir = 'zip/2020.zip'; // TODO: Change it
-    getAllCVAsZip(outputDir, () => {
+    const outputDir = `zip/${user.batchYear}.zip`;
+    const prefix = `cv/${user.batchYear}`;
+    getAllCVAsZip(prefix, outputDir, () => {
       isUpdatedZipSavedInS3 = true;
     });
 
     return res.json(s3data);
-
-    // TODO:
   } catch (err) {
     return res.status(500).json({ type: 'miscellaneous', message: err });
   }
@@ -96,7 +96,7 @@ async function getCV(req, res, next) {
 
     const awsS3Params = {
       Bucket: process.env.AWS_BUCKET_NAME,
-      Key: `cv/${user.regNo}.pdf`,
+      Key: `cv/${user.batchYear}/${user.regNo}.pdf`,
     };
 
     const hasUserUploadedCV = await isFileInS3(awsS3Params);
@@ -114,10 +114,10 @@ async function getCV(req, res, next) {
   }
 }
 
-async function getCVByRegNo(req, res, next) {
+async function getCVYearAndRegNo(req, res, next) {
   try {
     const { user } = req;
-    const { regNo } = req.params;
+    const { batchYear, regNo } = req.params;
 
     if (user.type !== userTypes.ADMIN) {
       return res
@@ -127,7 +127,7 @@ async function getCVByRegNo(req, res, next) {
 
     const awsS3Params = {
       Bucket: process.env.AWS_BUCKET_NAME,
-      Key: `cv/${Number(regNo)}.pdf`, // Casting to Number removes the preceding zeroes
+      Key: `cv/${batchYear}/${Number(regNo)}.pdf`, // Casting to Number removes the preceding zeroes
     };
 
     const hasUserUploadedCV = await isFileInS3(awsS3Params);
@@ -148,6 +148,7 @@ async function getCVByRegNo(req, res, next) {
 async function getAllCVsAsZip(req, res, next) {
   try {
     const { user } = req;
+    const { batchYear } = req.params;
 
     if (user.type !== userTypes.ADMIN) {
       return res
@@ -155,10 +156,11 @@ async function getAllCVsAsZip(req, res, next) {
         .json({ message: 'You are not allowed to perform this action' });
     }
 
-    const outputDir = 'zip/2020.zip'; // TODO: Change it
+    const outputDir = `zip/${batchYear}.zip`;
+    const prefix = `cv/${batchYear}`;
 
     if (!isUpdatedZipSavedInS3) {
-      await getAllCVAsZip(outputDir, () => {
+      await getAllCVAsZip(prefix, outputDir, () => {
         isUpdatedZipSavedInS3 = true;
       });
     }

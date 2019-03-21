@@ -68,12 +68,12 @@ const streamTo = (bucket, key) => {
   return pass;
 };
 
-const getAllCVAsZip = async (outputDir, callback) => {
+const getAllCVAsZip = async (prefix, outputDir, callback) => {
   return new Promise(async (resolve, reject) => {
     // Get all the fileNames in the cv bucket
     const keys = await listFilesInABucket({
       Bucket: process.env.AWS_BUCKET_NAME,
-      Prefix: 'cv',
+      Prefix: prefix,
     });
 
     // Get all files from S3 and store it in list

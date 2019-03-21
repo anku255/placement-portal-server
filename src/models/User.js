@@ -35,6 +35,10 @@ const userSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  batchYear: {
+    type: Number,
+    required: true,
+  },
 });
 
 /* eslint-disable-next-line */

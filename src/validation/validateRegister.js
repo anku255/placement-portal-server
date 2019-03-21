@@ -40,6 +40,15 @@ module.exports = function validateRegister(payload) {
     errors.regNo = 'Please provide your 7 digit registration number.';
   }
 
+  if (
+    !payload ||
+    typeof payload.batchYear !== 'string' ||
+    payload.batchYear.trim().length === 0
+  ) {
+    isFormValid = false;
+    errors.batchYear = 'Please provide your batch year.';
+  }
+
   return {
     success: isFormValid,
     errors,
