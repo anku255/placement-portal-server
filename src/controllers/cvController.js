@@ -1,7 +1,12 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import multer from 'multer';
-import { uploadToS3, isFileInS3, getSignedURL } from '../_helpers/aws';
+import {
+  uploadToS3,
+  isFileInS3,
+  getSignedURL,
+  getAllCVAsZip,
+} from '../_helpers/aws';
 import { userTypes } from '../constants';
 
 const router = express.Router();
@@ -40,6 +45,12 @@ router.get('/', getCV);
  * @access - private
  */
 router.get('/regNo/:regNo', getCVByRegNo);
+/**
+ * @route - POST /api/cv/all
+ * @desc - route for getting all cvs as ZIP
+ * @access - private
+ */
+router.get('/all', getAllCVsAsZip);
 
 // Controllers
 async function uploadCV(req, res, next) {
@@ -119,6 +130,31 @@ async function getCVByRegNo(req, res, next) {
       return res.json(url);
     }
     return res.status(400).json({ message: 'User has not uploaded his CV.' });
+  } catch (err) {
+    return res.status(500).json({ type: 'miscellaneous', message: err });
+  }
+}
+
+async function getAllCVsAsZip(req, res, next) {
+  try {
+    const { user } = req;
+
+    if (user.type !== userTypes.ADMIN) {
+      return res
+        .status(400)
+        .json({ message: 'You are not allowed to perform this action' });
+    }
+
+    const outputDir = 'zip/2020.zip'; // For 2020 Batch
+    await getAllCVAsZip(outputDir);
+
+    const url = getSignedURL({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: outputDir,
+      Expires: 60 * 60, // 1 hour
+    });
+
+    return res.json(url);
   } catch (err) {
     return res.status(500).json({ type: 'miscellaneous', message: err });
   }
