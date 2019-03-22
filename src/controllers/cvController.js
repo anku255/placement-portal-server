@@ -86,7 +86,9 @@ async function uploadCV(req, res, next) {
 
     return res.json(s3data);
   } catch (err) {
-    return res.status(500).json({ type: 'miscellaneous', message: err });
+    return res
+      .status(500)
+      .json({ type: 'miscellaneous', message: JSON.stringify(err) });
   }
 }
 
@@ -110,7 +112,9 @@ async function getCV(req, res, next) {
     }
     return res.status(400).json({ message: 'You have not uploaded your CV' });
   } catch (err) {
-    return res.status(500).json({ type: 'miscellaneous', message: err });
+    return res
+      .status(500)
+      .json({ type: 'miscellaneous', message: JSON.stringify(err) });
   }
 }
 
@@ -141,7 +145,9 @@ async function getCVYearAndRegNo(req, res, next) {
     }
     return res.status(400).json({ message: 'User has not uploaded his CV.' });
   } catch (err) {
-    return res.status(500).json({ type: 'miscellaneous', message: err });
+    return res
+      .status(500)
+      .json({ type: 'miscellaneous', message: JSON.stringify(err) });
   }
 }
 
@@ -173,7 +179,9 @@ async function getAllCVsAsZip(req, res, next) {
 
     return res.json(url);
   } catch (err) {
-    return res.status(500).json({ type: 'miscellaneous', message: err });
+    return res
+      .status(500)
+      .json({ type: 'miscellaneous', message: JSON.stringify(err) });
   }
 }
 

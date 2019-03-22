@@ -35,7 +35,7 @@ async function register(req, res, next) {
     const user = await new User(req.body).save();
     return res.json({ message: 'Registration Successful!' });
   } catch (err) {
-    return res.status(500).json({ message: err });
+    return res.status(500).json({ message: JSON.stringify(err) });
   }
 }
 
@@ -77,7 +77,9 @@ async function login(req, res, next) {
       });
     });
   } catch (error) {
-    return res.status(400).json({ type: 'miscellaneous', message: error });
+    return res
+      .status(400)
+      .json({ type: 'miscellaneous', message: JSON.stringify(error) });
   }
 }
 
