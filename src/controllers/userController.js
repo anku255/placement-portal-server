@@ -83,8 +83,14 @@ async function login(req, res, next) {
   }
 }
 
-function getCurrentUser(req, res, next) {
-  return res.json(req.user);
+async function getCurrentUser(req, res, next) {
+  const user = await User.findById(req.user._id);
+  const { password, ...userWithoutPassword } = user.toObject();
+  const token = jwt.sign(userWithoutPassword, process.env.SECRET_KEY, {
+    expiresIn: 60 * 60 * 24 * 30, // 30 days
+  });
+
+  return res.json({ token: `Bearer ${token}` });
 }
 
 export default router;
