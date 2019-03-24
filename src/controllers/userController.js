@@ -10,7 +10,7 @@ const User = mongoose.model('users');
 // Routes
 router.post('/register', register);
 router.post('/login', login);
-router.get('/current_user', getCurrentUser);
+router.post('/current_user', getCurrentUser);
 
 // Controllers
 
