@@ -76,6 +76,10 @@ const getAllCVAsZip = async (prefix, outputDir, callback) => {
       Prefix: prefix,
     });
 
+    if (keys.length === 0) {
+      return reject(new Error('No CVs found!'));
+    }
+
     // Get all files from S3 and store it in list
     const list = await Promise.all(
       keys.map(

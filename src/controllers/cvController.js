@@ -28,7 +28,7 @@ const multerOptions = {
 const uploadMiddleware = multer(multerOptions).single('file');
 
 // GLOBAL Variable
-let isUpdatedZipSavedInS3 = false;
+let isUpdatedZipSavedInS3 = true;
 
 /**
  * @route - POST /api/cv
@@ -181,7 +181,7 @@ async function getAllCVsAsZip(req, res, next) {
   } catch (err) {
     return res
       .status(500)
-      .json({ type: 'miscellaneous', message: JSON.stringify(err) });
+      .json({ type: 'miscellaneous', message: JSON.stringify(err.message) });
   }
 }
 
