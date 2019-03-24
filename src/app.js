@@ -14,7 +14,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Cors setup
 // cors setup
 const corsOptions = {
-  origin: ['http://localhost:3000'],
+  origin: ['http://localhost:3000', 'https://placement-portal.netlify.com'],
   optionsSuccessStatus: 200,
   credentials: true,
 };
