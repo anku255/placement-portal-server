@@ -24,11 +24,13 @@
   },
   "homepage": "https://github.com/anku255/express-basic-boilerplate#readme",
   "dependencies": {
+    "@sendgrid/mail": "^6.3.1",
     "archiver": "^3.0.0",
     "aws-sdk": "^2.425.0",
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "^1.18.3",
     "cors": "^2.8.5",
+    "crypto": "^1.0.1",
     "dotenv": "^6.2.0",
     "esm": "^3.2.18",
     "express": "^4.16.4",

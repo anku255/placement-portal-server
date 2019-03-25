@@ -9,6 +9,8 @@ function jwt() {
       '/status',
       '/api/users/register',
       '/api/users/login',
+      '/api/users/resendToken',
+      new RegExp('/api/users/confirmation/*'),
     ],
   });
 }

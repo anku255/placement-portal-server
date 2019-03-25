@@ -19,7 +19,7 @@ const userSchema = new Schema({
   },
   isVerified: {
     type: Boolean,
-    default: true, // TODO: Implement Verificaiton
+    default: false,
   },
   type: {
     type: String,
