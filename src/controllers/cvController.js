@@ -209,7 +209,9 @@ async function getAllUsersWithCV(req, res, next) {
       type: userTypes.USER,
       batchYear,
       hasUploadedCV: true,
-    }).select('name regNo -_id');
+    })
+      .select('name regNo -_id')
+      .sort('regNo');
 
     return res.json(usersWithCV);
   } catch (err) {
