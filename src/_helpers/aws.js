@@ -5,6 +5,7 @@ import stream from 'stream';
 const awsConfig = {
   accessKeyId: process.env.AWS_ACCESS_ID,
   secretAccessKey: process.env.AWS_ACCESS_KEY,
+  region: 'ap-south-1',
 };
 
 // Configure AWS
