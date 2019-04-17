@@ -126,4 +126,31 @@ const getAllCVAsZip = async (prefix, outputDir, callback) => {
   });
 };
 
-export { aws, s3, uploadToS3, isFileInS3, getSignedURL, getAllCVAsZip };
+const copyFileInS3 = params => {
+  return new Promise((resolve, reject) => {
+    s3.copyObject(params, (err, data) => {
+      if (err) return reject(err);
+      return resolve(data);
+    });
+  });
+};
+
+const deleteFileInS3 = params => {
+  return new Promise((resolve, reject) => {
+    s3.deleteObject(params, (err, data) => {
+      if (err) return reject(err);
+      return resolve(data);
+    });
+  });
+};
+
+export {
+  aws,
+  s3,
+  uploadToS3,
+  isFileInS3,
+  getSignedURL,
+  getAllCVAsZip,
+  copyFileInS3,
+  deleteFileInS3,
+};

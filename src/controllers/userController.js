@@ -4,8 +4,10 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import validateRegister from '../validation/validateRegister';
 import validateLogin from '../validation/validateLogin';
+import validateProfile from '../validation/validateProfile';
 
 import { sendConfirmationMail } from '../_helpers/sendgrid';
+import { copyFileInS3, deleteFileInS3 } from '../_helpers/aws';
 
 const router = express.Router();
 const User = mongoose.model('users');
@@ -14,6 +16,7 @@ const Token = mongoose.model('tokens');
 // Routes
 router.post('/register', register);
 router.post('/login', login);
+router.post('/edit-profile', editProfile);
 router.post('/current_user', getCurrentUser);
 router.get('/confirmation/:token', confirmEmail);
 router.post('/resendToken', resendToken);
@@ -172,6 +175,55 @@ async function resendToken(req, res, next) {
   } catch (error) {
     console.log('sending error', error);
     return res.status(400).json({ message: JSON.stringify(error) });
+  }
+}
+
+async function editProfile(req, res, next) {
+  const validationResult = validateProfile(req.body);
+  if (!validationResult.success) {
+    return res.status(400).json({
+      type: 'validation',
+      errors: validationResult.errors,
+    });
+  }
+
+  try {
+    const oldUser = await User.findById(req.user._id);
+    const updatedUser = await User.findByIdAndUpdate(oldUser._id, req.body, {
+      new: true,
+    });
+
+    // Move user's cv to correct location in AWS if either regNo or batchYear changed
+    if (
+      oldUser.hasUploadedCV &&
+      (updatedUser.regNo !== oldUser.regNo ||
+        updatedUser.batchYear !== oldUser.batchYear)
+    ) {
+      // Copy file to the new location
+      const copyParams = {
+        Bucket: process.env.AWS_BUCKET_NAME,
+        CopySource: `${process.env.AWS_BUCKET_NAME}/cv/${oldUser.batchYear}/${
+          oldUser.regNo
+        }.pdf`,
+        Key: `cv/${updatedUser.batchYear}/${updatedUser.regNo}.pdf`,
+      };
+
+      await copyFileInS3(copyParams);
+
+      // delete the old file
+      const deleteParams = {
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: `cv/${oldUser.batchYear}/${oldUser.regNo}.pdf`,
+      };
+
+      await deleteFileInS3(deleteParams);
+    }
+
+    return res.json({
+      message: `Profile Updated Successfully!`,
+    });
+  } catch (err) {
+    return res.status(500).json({ message: JSON.stringify(err) });
   }
 }
 
