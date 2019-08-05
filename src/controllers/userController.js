@@ -71,9 +71,6 @@ async function login(req, res, next) {
 
     const { email, password } = req.body;
 
-    console.log('password', email);
-    
-
     const user = await User.findOne({ email });
 
     if (!user.isVerified) {
