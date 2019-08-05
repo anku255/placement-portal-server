@@ -230,6 +230,8 @@ async function editProfile(req, res, next) {
 }
 
 async function forgotPassword (req, res) {
+  const FRONTEND_URL = 'https://placement-portal.netlify.com';
+  
   try {
     const user = await User.findOne({ email: req.body.email });
     if (!user) {
@@ -245,7 +247,7 @@ async function forgotPassword (req, res) {
     }).save();
 
     sendForgotPasswordMail(
-      process.env.FRONTEND_URL,
+      FRONTEND_URL,
       user.email,
       user.name,
       token.token
