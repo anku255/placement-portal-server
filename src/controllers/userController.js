@@ -21,6 +21,7 @@ router.post('/current_user', getCurrentUser);
 router.get('/confirmation/:token', confirmEmail);
 router.post('/resendToken', resendToken);
 router.post('/forgotPassword', forgotPassword);
+router.post('/resetPassword', resetPassword);
 
 // Controllers
 
@@ -261,5 +262,31 @@ async function forgotPassword (req, res) {
     return res.status(400).json({ message: "Some error occurred!" });
   }
 };
+
+async function resetPassword(req, res) {
+  try {
+    const token = await Token.findOne({ token: req.body.token });
+    if (!token) {
+      return res.status(400).json({
+        type: "not-found",
+        message:
+          "We were unable to find a valid token. Your token my have expired."
+      });
+    }
+
+    const user = await User.findById(token._userId);
+    if (!user) {
+      return res
+        .status(400)
+        .json({ message: "We were unable to find a user for this token." });
+    }
+
+    user.password = req.body.password;
+    await user.save();
+    res.json({ message: "Your password has been reset. Please log in." });
+  } catch (error) {
+    return res.status(400).json({ message: error });
+  }
+}
 
 export default router;
