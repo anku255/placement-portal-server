@@ -10,6 +10,7 @@ function jwt() {
       '/api/users/register',
       '/api/users/login',
       '/api/users/resendToken',
+      '/api/users/forgotPassword',
       new RegExp('/api/users/confirmation/*'),
     ],
   });

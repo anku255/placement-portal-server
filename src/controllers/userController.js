@@ -6,7 +6,7 @@ import validateRegister from '../validation/validateRegister';
 import validateLogin from '../validation/validateLogin';
 import validateProfile from '../validation/validateProfile';
 
-import { sendConfirmationMail } from '../_helpers/sendgrid';
+import { sendConfirmationMail, sendForgotPasswordMail} from '../_helpers/sendgrid';
 import { copyFileInS3, deleteFileInS3 } from '../_helpers/aws';
 
 const router = express.Router();
@@ -20,6 +20,7 @@ router.post('/edit-profile', editProfile);
 router.post('/current_user', getCurrentUser);
 router.get('/confirmation/:token', confirmEmail);
 router.post('/resendToken', resendToken);
+router.post('/forgotPassword', forgotPassword);
 
 // Controllers
 
@@ -68,6 +69,9 @@ async function login(req, res, next) {
     }
 
     const { email, password } = req.body;
+
+    console.log('password', email);
+    
 
     const user = await User.findOne({ email });
 
@@ -226,5 +230,36 @@ async function editProfile(req, res, next) {
     return res.status(500).json({ message: JSON.stringify(err) });
   }
 }
+
+async function forgotPassword (req, res) {
+  try {
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "We were unable to find a user with that email."
+      });
+    }
+
+    const token = await new Token({
+      _userId: user._id,
+      token: crypto.randomBytes(16).toString("hex")
+    }).save();
+
+    sendForgotPasswordMail(
+      process.env.FRONTEND_URL,
+      user.email,
+      user.name,
+      token.token
+    );
+
+    return res.json({
+      success: true,
+      message: `A password reset mail has been sent to ${user.email}`
+    });
+  } catch (err) {
+    return res.status(400).json({ message: "Some error occurred!" });
+  }
+};
 
 export default router;
