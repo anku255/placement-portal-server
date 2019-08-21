@@ -144,6 +144,70 @@ const deleteFileInS3 = params => {
   });
 };
 
+const getMutlipleCVAsZip = async (prefix, outputDir, regNumbers) => {
+  return new Promise(async (resolve, reject) => {
+    // Get all the fileNames in the cv bucket
+    let keys = await listFilesInABucket({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Prefix: prefix,
+    });
+
+    if (keys.length === 0) {
+      return reject(new Error('No CVs found!'));
+    }
+
+    // filter files based on given regNumbers
+    keys = keys.filter(key => {
+      const arr = key.split('/');
+      const fileName = arr[arr.length - 1];
+      const fileNameWithoutExt = fileName.split('.')[0];
+
+      return regNumbers.includes(fileNameWithoutExt);
+    });
+
+    // Get all files from S3 and store it in list
+    const list = await Promise.all(
+      keys.map(
+        key =>
+          new Promise(_resolve => {
+            getFileFromS3({
+              Bucket: process.env.AWS_BUCKET_NAME,
+              Key: key,
+            }).then(data =>
+              _resolve({ data: data.Body, name: `${key.split('/').pop()}` })
+            );
+          })
+      )
+    ).catch(err => {
+      throw new Error(err);
+    });
+
+    // Make an archive and upload it to S3
+    await new Promise((_resolve, _reject) => {
+      const myStream = streamTo(process.env.AWS_BUCKET_NAME, outputDir); // Now we instantiate that pipe...
+
+      const archive = archiver('zip');
+      archive.on('error', err => {
+        throw new Error(err);
+      });
+
+      // Your promise gets resolved when the fluid stops running...
+      // so that's when you get to close and resolve
+      myStream.on('close', _resolve);
+      myStream.on('end', _resolve);
+      myStream.on('error', reject);
+
+      archive.pipe(myStream); // archiver will pass the zip to myStream
+      list.forEach(itm => archive.append(itm.data, { name: itm.name })); // And then we start adding files to it
+      archive.finalize(); // Tell is, that's all we want to add. Then when it finishes, the promise will resolve in one of those events up there
+    }).catch(err => {
+      throw new Error(err);
+    });
+
+    return resolve();
+  });
+};
+
 export {
   aws,
   s3,
@@ -153,4 +217,5 @@ export {
   getAllCVAsZip,
   copyFileInS3,
   deleteFileInS3,
+  getMutlipleCVAsZip,
 };

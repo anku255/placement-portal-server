@@ -6,6 +6,7 @@ import {
   isFileInS3,
   getSignedURL,
   getAllCVAsZip,
+  getMutlipleCVAsZip,
 } from '../_helpers/aws';
 import { userTypes } from '../constants';
 
@@ -42,6 +43,14 @@ router.post('/', uploadMiddleware, uploadCV);
  * @access - private
  */
 router.get('/', getCV);
+
+/**
+ * @route - POST /api/cv/mulitple
+ * @desc - route for getting mutlple cvs as a zip [for given reg numbers and batch year]
+ * @access - private
+ */
+router.post('/multiple', getMultipleCVsAsZip);
+
 /**
  * @route - GET /api/cv/batchYear/:batchYear/regNo/:regNo
  * @desc - route for getting direct Url for CV by regNo
@@ -56,7 +65,7 @@ router.get('/batchYear/:batchYear/regNo/:regNo', getCVYearAndRegNo);
 router.get('/all/batchYear/:batchYear', getAllCVsAsZip);
 
 /**
- * @route - GET /api/cv/users
+ * @route - GET /api/cv/all/batchYear/:batchYear
  * @desc - route for getting all the users who have uploaded the cv
  * @access - private
  */
@@ -214,6 +223,42 @@ async function getAllUsersWithCV(req, res, next) {
       .sort('regNo');
 
     return res.json(usersWithCV);
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ type: 'miscellaneous', message: JSON.stringify(err.message) });
+  }
+}
+
+async function getMultipleCVsAsZip(req, res, next) {
+  try {
+    const { user } = req;
+    const { regNumbers, batchYear } = req.body;
+
+    if (user.type !== userTypes.ADMIN) {
+      return res
+        .status(400)
+        .json({ message: 'You are not allowed to perform this action' });
+    }
+
+    if (!regNumbers || !batchYear) {
+      return res.status(400).json({
+        message: 'Please provide a list of registration Numbers and batch Year',
+      });
+    }
+
+    const outputDir = `zip/temp.zip`;
+    const prefix = `cv/${batchYear}`;
+
+    await getMutlipleCVAsZip(prefix, outputDir, regNumbers);
+
+    const url = getSignedURL({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: outputDir,
+      Expires: 60 * 60, // 1 hour
+    });
+
+    return res.json(url);
   } catch (err) {
     return res
       .status(500)
