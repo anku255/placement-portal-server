@@ -8,6 +8,7 @@ const Notice = mongoose.model('notices');
 // Routes
 router.get('/', getNotices);
 router.post('/', addNotice);
+router.put('/:noticeId', updateNotice);
 
 // Controllers
 
@@ -71,6 +72,40 @@ async function addNotice(req, res) {
     }
 
     const notice = await new Notice({ deadline, contentMarkdown }).save();
+
+    return res.json({ notice });
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ type: 'miscellaneous', message: JSON.stringify(err.message) });
+  }
+}
+
+async function updateNotice(req, res) {
+  try {
+    const { user } = req;
+    if (user.type !== userTypes.ADMIN) {
+      return res
+        .status(400)
+        .json({ message: 'You are not allowed to perform this action' });
+    }
+
+    const { deadline, contentMarkdown } = req.body;
+
+    if (!deadline || !contentMarkdown) {
+      return res.status(400).json({
+        message: 'Please provide both deadline and content for the notice',
+      });
+    }
+
+    const { noticeId } = req.params;
+
+    const notice = await Notice.findById(noticeId);
+
+    notice.deadline = deadline;
+    notice.contentMarkdown = contentMarkdown;
+
+    await notice.save();
 
     return res.json({ notice });
   } catch (err) {
