@@ -9,6 +9,7 @@ const Notice = mongoose.model('notices');
 router.get('/', getNotices);
 router.post('/', addNotice);
 router.put('/:noticeId', updateNotice);
+router.delete('/:noticeId', deleteNotice);
 
 // Controllers
 
@@ -108,6 +109,27 @@ async function updateNotice(req, res) {
     await notice.save();
 
     return res.json({ notice });
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ type: 'miscellaneous', message: JSON.stringify(err.message) });
+  }
+}
+
+async function deleteNotice(req, res) {
+  try {
+    const { user } = req;
+    if (user.type !== userTypes.ADMIN) {
+      return res
+        .status(400)
+        .json({ message: 'You are not allowed to perform this action' });
+    }
+
+    const { noticeId } = req.params;
+
+    await Notice.findByIdAndDelete(noticeId);
+
+    return res.status(204).json({});
   } catch (err) {
     return res
       .status(500)
